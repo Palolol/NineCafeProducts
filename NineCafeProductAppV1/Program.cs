@@ -11,11 +11,17 @@ namespace NineCafeProductAppV1
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var provider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
             // register appdbcontext <--
-            builder.Services.AddDbContext<AppDbContext>(
-                options => options.UseSqlite(
-                    builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddDbContext<AppDbContext>(options =>
+            {
+                if (provider == "Sqlite")
+                    options.UseSqlite(connectionString);
+                else 
+                    options.UseSqlServer(connectionString);
+            });
 
             // register identity  <--
             builder.Services.AddDefaultIdentity<IdentityUser>(options =>
@@ -42,9 +48,14 @@ namespace NineCafeProductAppV1
             }
 
             // scope <--
-            using(var scope = app.Services.CreateScope())
+            using (var scope = app.Services.CreateScope())
             {
                 var service = scope.ServiceProvider;
+
+                if (provider == "Sqlite")
+                {
+                    service.GetRequiredService<AppDbContext>().Database.EnsureCreated();
+                }
 
                 RoleSeeder.SeedRoleAsync(service).Wait();
                 UserSeeder.UserSeederAsync(service).Wait();
