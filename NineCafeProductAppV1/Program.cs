@@ -14,7 +14,7 @@ namespace NineCafeProductAppV1
 
             // register appdbcontext <--
             builder.Services.AddDbContext<AppDbContext>(
-                options => options.UseSqlServer(
+                options => options.UseSqlite(
                     builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // register identity  <--
